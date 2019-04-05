@@ -17,6 +17,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<target.dist.dir>target/dist</target.dist.dir>
+		<dist.home.dir>${project.basedir}/target/dist</dist.home.dir>
 	</properties>
 
 	<dependencies>
@@ -24,11 +26,13 @@
 			<groupId>org.apache.mina</groupId>
 			<artifactId>mina-core</artifactId>
 			<version>2.0.16</version>
+			<!--<version>2.1.0</version>-->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.sshd</groupId>
 			<artifactId>sshd-core</artifactId>
 			<version>1.2.0</version>
+			<!--<version>2.2.0</version>-->
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
@@ -166,7 +170,7 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>target/dist/lib</outputDirectory>
+							<outputDirectory>${target.dist.dir}/lib</outputDirectory>
 							<overWriteReleases>true</overWriteReleases>
 							<overWriteSnapshots>true</overWriteSnapshots>
 							<overWriteIfNewer>true</overWriteIfNewer>
@@ -186,7 +190,7 @@
 									<version>${project.version}</version>
 									<type>jar</type>
 									<overWrite>true</overWrite>
-									<outputDirectory>target/dist/lib</outputDirectory>
+									<outputDirectory>${target.dist.dir}/lib</outputDirectory>
 								</artifactItem>
 							</artifactItems>
 						</configuration>
@@ -206,10 +210,11 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>target/dist/bin/linux</outputDirectory>
+							<outputDirectory>${target.dist.dir}/bin/linux</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/linux</directory>
+									<filtering>true</filtering>
 								</resource>
 							</resources>
 						</configuration>
@@ -221,10 +226,11 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>target/dist/bin/windows</outputDirectory>
+							<outputDirectory>${target.dist.dir}/bin/windows</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/windows</directory>
+									<filtering>true</filtering>
 								</resource>
 							</resources>
 						</configuration>
@@ -236,10 +242,26 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>target/dist/conf</outputDirectory>
+							<outputDirectory>${target.dist.dir}/conf</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/sampleconf</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>dist-copy-keys</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${target.dist.dir}/keys</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/samplekeys</directory>
 								</resource>
 							</resources>
 						</configuration>
@@ -258,14 +280,22 @@
 						</goals>
 						<configuration>
 							<properties>
-								<usersDir>target/dist/users/test</usersDir>
+								<usersDir>${target.dist.dir}/users/test</usersDir>
+								<logDir>${target.dist.dir}/logs</logDir>
 							</properties>
 							<source>
 								def usersDir = new File(properties['usersDir'])
 								if (!usersDir.exists())
 								{
-									log.info('Creating folder {}', properties['usersDir'].replace("\\", "/"))
+									log.info('Creating folder {}',properties['usersDir'].replace("\\", "/"))
 									usersDir.mkdirs()
+								}
+
+								def logDir = new File(properties['logDir'])
+								if (!logDir.exists())
+								{
+									log.info('Creating folder {}',properties['logDir'].replace("\\", "/"))
+									logDir.mkdirs()
 								}
 							</source>
 						</configuration>

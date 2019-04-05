@@ -2,7 +2,7 @@
 echo off
 
 set ID=default
-set SFTPD_HOME=C:/dev/sftp/sftpserver/home
+set SFTPD_HOME=${dist.home.dir}
 set SFTPD_MEM_MB=64
 set SFTPD_OPTS=-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -showversion -XX:+PrintCommandLineFlags -XX:-PrintFlagsFinal
 set SFTPD_POLICY=%SFTPD_HOME%/conf/sftpd.policy

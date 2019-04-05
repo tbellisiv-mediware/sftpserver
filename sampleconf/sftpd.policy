@@ -33,6 +33,7 @@ grant {
   permission java.lang.RuntimePermission "writeFileDescriptor";
   permission java.lang.RuntimePermission "accessUserInformation";
   permission java.lang.RuntimePermission "fileSystemProvider";
+  permission java.lang.RuntimePermission "accessUserDefinedAttributes";
   //
   permission java.security.SecurityPermission "putProviderProperty.BC";
   permission java.security.SecurityPermission "insertProvider.BC";
@@ -46,11 +47,11 @@ grant {
   permission java.io.FilePermission "${java.io.tmpdir}${/}-", "read, write, delete";
   //
   permission java.io.FilePermission "/etc/resolv.conf", "read";
-  permission java.io.FilePermission "${sftp.home}/-", "read";
-  permission java.io.FilePermission "${sftpserver.global.hostkey.ser.path}/-", "read, write";
-  permission java.io.FilePermission "${sftpserver.global.hostkey.pem.path}/-", "read, write";
+  permission java.io.FilePermission "${sftp.home}/-", "read, write";
+  //permission java.io.FilePermission "${sftpserver.global.hostkey.ser.path}/-", "read, write";
+  //permission java.io.FilePermission "${sftpserver.global.hostkey.pem.path}/-", "read, write";
   // Home for Users
-  permission java.io.FilePermission "${sftpserver.global.users.path}/-", "read, write, delete";
+  //permission java.io.FilePermission "${sftpserver.global.users.path}/-", "read, write, delete";
   // Directory for logs (if use log4j)
   permission java.io.FilePermission "${sftp.home}/logs/-", "read, write";
   //

@@ -77,11 +77,12 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Guillermo Grandes / guillermo.grandes[at]gmail.com
  */
+@SuppressWarnings("WeakerAccess")
 public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	public static final String CONFIG_FILE = "/sftpd.properties";
 	public static final String HTPASSWD_FILE = "/htpasswd";
-	public static final String HOSTKEY_FILE_PEM = "keys/hostkey.pem";
-	public static final String HOSTKEY_FILE_SER = "keys/hostkey.ser";
+	public static final String DEFAULT_HOSTKEY_FILE_PEM = "keys/hostkey.pem";
+	public static final String DEFAULT_HOSTKEY_FILE_SER = "keys/hostkey.ser";
 
 	private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 	private Config db;
@@ -93,7 +94,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	}
 
 	protected void setupFactories() {
-		final CustomSftpSubsystemFactory sftpSubsys = new CustomSftpSubsystemFactory();
+		final CustomSftpSubsystemFactory sftpSubsys = new CustomSftpSubsystemFactory(db);
 		sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(sftpSubsys));
 		sshd.setMacFactories(Arrays.<NamedFactory<Mac>>asList( //
 				BuiltinMacs.hmacsha512, //
@@ -109,9 +110,9 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	protected void setupKeyPair() {
 		final AbstractGeneratorHostKeyProvider provider;
 		if (SecurityUtils.isBouncyCastleRegistered()) {
-			provider = SecurityUtils.createGeneratorHostKeyProvider(new File(HOSTKEY_FILE_PEM).toPath());
+			provider = SecurityUtils.createGeneratorHostKeyProvider(new File(db.getHostKeyPemPath()).toPath());
 		} else {
-			provider = new SimpleGeneratorHostKeyProvider(new File(HOSTKEY_FILE_SER));
+			provider = new SimpleGeneratorHostKeyProvider(new File(db.getHostKeySerPath()));
 		}
 		provider.setAlgorithm(KeyUtils.RSA_ALGORITHM);
 		sshd.setKeyPairProvider(provider);
@@ -231,6 +232,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	public void start() {
 		LOG.info("Starting");
 		db = loadConfig();
+		System.out.println("sftp.home = " + System.getProperty("sftp.home").replace('\\','/').replace("//","/"));
 		LOG.info("BouncyCastle enabled=" + SecurityUtils.isBouncyCastleRegistered());
 		sshd = SshServer.setUpDefaultServer();
 		LOG.info("SSHD " + sshd.getVersion());
@@ -326,6 +328,10 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		public static final String PROP_ENABLED = "enableflag"; // true / false
 		public static final String PROP_ENABLE_WRITE = "writepermission"; // true / false
 
+		//Tellis - new Global properties
+		public static final String PROP_HOSTKEY_PEM_PATH = "global.hostkey.pem.path";
+		public static final String PROP_HOSTKEY_SER_PATH = "global.hostkey.ser.path";
+
 		private final Properties db;
 
 		public Config(final Properties db) {
@@ -343,6 +349,33 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 
 		public int getPort() {
 			return Integer.parseInt(getValue(PROP_PORT));
+		}
+
+		Properties getProperties() { return db; }
+
+
+		// Tellis - path to .pem HostKey file
+		public String getHostKeyPemPath()
+		{
+			String path = getValue(PROP_HOSTKEY_PEM_PATH);
+			if (StringUtils.isNullOrEmptyOrWhitespace(path))
+			{
+				path =  DEFAULT_HOSTKEY_FILE_PEM;
+			}
+
+			return path;
+		}
+
+		// Tellis - path to .ser HostKey file
+		public String getHostKeySerPath()
+		{
+			String path = getValue(PROP_HOSTKEY_SER_PATH);
+			if (StringUtils.isNullOrEmptyOrWhitespace(path))
+			{
+				path =  DEFAULT_HOSTKEY_FILE_SER;
+			}
+
+			return path;
 		}
 
 		public int getMaxPacketLength() {
@@ -518,6 +551,13 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	}
 
 	static class CustomSftpSubsystemFactory extends SftpSubsystemFactory {
+
+		private final Config db;
+
+		public CustomSftpSubsystemFactory(final Config db) {
+			this.db = db;
+		}
+
 		@Override
 		public Command create() {
 			final SftpSubsystem subsystem = new SftpSubsystem(getExecutorService(), isShutdownOnExit(),
@@ -540,6 +580,9 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 					subsystem.addSftpEventListener(l);
 				}
 			}
+
+			subsystem.addSftpEventListener(new ServerEventListener(db.getProperties()));
+
 			return subsystem;
 		}
 	}
