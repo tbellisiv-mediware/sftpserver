@@ -39,6 +39,8 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.sshd.common.Factory;
+import org.apache.sshd.common.io.IoServiceEventListener;
+import org.apache.sshd.server.command.Command;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolver;
 import org.apache.sshd.common.PropertyResolverUtils;
@@ -52,8 +54,7 @@ import org.apache.sshd.common.mac.BuiltinMacs;
 import org.apache.sshd.common.mac.Mac;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.util.GenericUtils;
-import org.apache.sshd.common.util.SecurityUtils;
-import org.apache.sshd.server.Command;
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.ServerFactoryManager;
@@ -101,6 +102,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 				BuiltinMacs.hmacsha256, //
 				BuiltinMacs.hmacsha1));
 		sshd.setChannelFactories(Arrays.<NamedFactory<Channel>>asList(ChannelSessionFactory.INSTANCE));
+		sshd.setIoServiceEventListener(new ServerIoServiceEventListener(db.getProperties()));
 	}
 
 	protected void setupDummyShell(final boolean enable) {
@@ -112,7 +114,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		if (SecurityUtils.isBouncyCastleRegistered()) {
 			provider = SecurityUtils.createGeneratorHostKeyProvider(new File(db.getHostKeyPemPath()).toPath());
 		} else {
-			provider = new SimpleGeneratorHostKeyProvider(new File(db.getHostKeySerPath()));
+			provider = new SimpleGeneratorHostKeyProvider(Paths.get(db.getHostKeySerPath()));
 		}
 		provider.setAlgorithm(KeyUtils.RSA_ALGORITHM);
 		sshd.setKeyPairProvider(provider);
@@ -121,7 +123,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	protected void setupScp() {
 		sshd.setCommandFactory(new ScpCommandFactory());
 		sshd.setFileSystemFactory(new SecureFileSystemFactory(db));
-		sshd.setTcpipForwardingFilter(null);
+		sshd.setForwardingFilter(null);
 		sshd.setAgentFactory(null);
 	}
 
@@ -222,12 +224,14 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		PropertyResolverUtils.updateProperty(sshd, ServerFactoryManager.SERVER_IDENTIFICATION, "SSHD");
 	}
 
+	/*
 	private void setupMaxPacketLength() {
 		final int maxPacketLength = db.getMaxPacketLength();
 		if (maxPacketLength > 1) {
 			PropertyResolverUtils.updateProperty(sshd, SftpSubsystem.MAX_PACKET_LENGTH_PROP, maxPacketLength);
 		}
 	}
+	*/
 
 	public void start() {
 		LOG.info("Starting");
@@ -237,7 +241,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		sshd = SshServer.setUpDefaultServer();
 		LOG.info("SSHD " + sshd.getVersion());
 		hackVersion();
-		setupMaxPacketLength();
+		//setupMaxPacketLength();
 		setupFactories();
 		setupKeyPair();
 		setupScp();
@@ -511,6 +515,12 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		public Command create() {
 			return new SecureShellCommand();
 		}
+
+		@Override
+		public Command get()
+		{
+			return create();
+		}
 	}
 
 	static class SecureShellCommand implements Command {
@@ -550,7 +560,8 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		}
 	}
 
-	static class CustomSftpSubsystemFactory extends SftpSubsystemFactory {
+	static class CustomSftpSubsystemFactory extends SftpSubsystemFactory
+	{
 
 		private final Config db;
 
@@ -560,8 +571,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 
 		@Override
 		public Command create() {
-			final SftpSubsystem subsystem = new SftpSubsystem(getExecutorService(), isShutdownOnExit(),
-					getUnsupportedAttributePolicy()) {
+			final SftpSubsystem subsystem = new SftpSubsystem(getExecutorService(), getUnsupportedAttributePolicy(), getFileSystemAccessor(), getErrorStatusDataHandler()) {
 				@Override
 				protected void setFileAttribute(final Path file, final String view, final String attribute,
 						final Object value, final LinkOption... options) throws IOException {
@@ -581,7 +591,7 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 				}
 			}
 
-			subsystem.addSftpEventListener(new ServerEventListener(db.getProperties()));
+			subsystem.addSftpEventListener(new ServerSftpEventListener(db.getProperties()));
 
 			return subsystem;
 		}
