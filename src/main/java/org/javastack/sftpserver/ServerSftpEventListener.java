@@ -10,10 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+@SuppressWarnings("Duplicates")
 public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
 {
     private static final String PROPS_EVENT_SFTP_OPEN_DELAY_ENABLED = "sftpserver.global.event.sftp.open.delay.enabled";
     private static final String PROPS_EVENT_SFTP_OPEN_DELAY_MSECS = "sftpserver.global.event.sftp.open.delay.msecs";
+
+    private static final String PROPS_EVENT_SFTP_OPENING_DELAY_ENABLED = "sftpserver.global.event.sftp.opening.delay.enabled";
+    private static final String PROPS_EVENT_SFTP_OPENING_DELAY_MSECS = "sftpserver.global.event.sftp.opening.delay.msecs";
 
     private static final String PROPS_EVENT_SFTP_READING_DELAY_ENABLED = "sftpserver.global.event.sftp.reading.delay.enabled";
     private static final String PROPS_EVENT_SFTP_READING_DELAY_MSECS = "sftpserver.global.event.sftp.reading.delay.msecs";
@@ -34,13 +38,16 @@ public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
         log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_OPEN_DELAY_ENABLED, props.getProperty(PROPS_EVENT_SFTP_OPEN_DELAY_ENABLED)));
         log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_OPEN_DELAY_MSECS, props.getProperty(PROPS_EVENT_SFTP_OPEN_DELAY_MSECS)));
 
+        log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_OPENING_DELAY_ENABLED, props.getProperty(PROPS_EVENT_SFTP_OPENING_DELAY_ENABLED)));
+        log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_OPENING_DELAY_MSECS, props.getProperty(PROPS_EVENT_SFTP_OPENING_DELAY_MSECS)));
+
         log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_READING_DELAY_ENABLED, props.getProperty(PROPS_EVENT_SFTP_READING_DELAY_ENABLED)));
         log.info(String.format("%s%s = %s", logHeader, PROPS_EVENT_SFTP_READING_DELAY_MSECS, props.getProperty(PROPS_EVENT_SFTP_READING_DELAY_MSECS)));
     }
 
     public void open(ServerSession session, String remoteHandle, Handle localHandle)
     {
-        String logHeader = "[Event-SFTP-File-Opened] ";
+        String logHeader = "[Event-SFTP-File-Open] ";
 
         boolean delayEnabled = Boolean.parseBoolean(props.getProperty(PROPS_EVENT_SFTP_OPEN_DELAY_ENABLED, "false"));
         int delayMsecs = Integer.parseInt(props.getProperty(PROPS_EVENT_SFTP_OPEN_DELAY_MSECS, "0"));
@@ -51,6 +58,35 @@ public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
             if (Files.isRegularFile(path))
             {
                 log.info(String.format(logHeader + "Opened file %s", path));
+
+                try
+                {
+                    log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
+                    Thread.sleep(delayMsecs);
+                    log.info(logHeader + "Delay done");
+                }
+                catch (InterruptedException ex)
+                {
+                    //gulp ...
+                }
+            }
+        }
+    }
+
+    @Override
+    public void opening(ServerSession session, String remoteHandle, Handle localHandle)
+    {
+        String logHeader = "[Event-SFTP-File-Opening] ";
+
+        boolean delayEnabled = Boolean.parseBoolean(props.getProperty(PROPS_EVENT_SFTP_OPENING_DELAY_ENABLED, "false"));
+        int delayMsecs = Integer.parseInt(props.getProperty(PROPS_EVENT_SFTP_OPENING_DELAY_MSECS, "0"));
+
+        if (delayEnabled && delayMsecs > 0)
+        {
+            Path path = localHandle.getFile();
+            if (Files.isRegularFile(path))
+            {
+                log.info(String.format(logHeader + "Opening file %s", path));
 
                 try
                 {
