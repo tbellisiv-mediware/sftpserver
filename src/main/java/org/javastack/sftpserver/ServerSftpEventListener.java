@@ -55,20 +55,18 @@ public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
         if (delayEnabled && delayMsecs > 0)
         {
             Path path = localHandle.getFile();
-            if (Files.isRegularFile(path))
-            {
-                log.info(String.format(logHeader + "Opened file %s", path));
 
-                try
-                {
-                    log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
-                    Thread.sleep(delayMsecs);
-                    log.info(logHeader + "Delay done");
-                }
-                catch (InterruptedException ex)
-                {
-                    //gulp ...
-                }
+            log.info(String.format(logHeader + "Opened file %s", path));
+
+            try
+            {
+                log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
+                Thread.sleep(delayMsecs);
+                log.info(logHeader + "Delay done");
+            }
+            catch (InterruptedException ex)
+            {
+                //gulp ...
             }
         }
     }
@@ -84,20 +82,18 @@ public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
         if (delayEnabled && delayMsecs > 0)
         {
             Path path = localHandle.getFile();
-            if (Files.isRegularFile(path))
-            {
-                log.info(String.format(logHeader + "Opening file %s", path));
 
-                try
-                {
-                    log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
-                    Thread.sleep(delayMsecs);
-                    log.info(logHeader + "Delay done");
-                }
-                catch (InterruptedException ex)
-                {
-                    //gulp ...
-                }
+            log.info(String.format(logHeader + "Opening file %s", path));
+
+            try
+            {
+                log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
+                Thread.sleep(delayMsecs);
+                log.info(logHeader + "Delay done");
+            }
+            catch (InterruptedException ex)
+            {
+                //gulp ...
             }
         }
     }
@@ -113,20 +109,17 @@ public class ServerSftpEventListener extends AbstractSftpEventListenerAdapter
         if (delayEnabled && delayMsecs > 0)
         {
             Path path = localHandle.getFile();
-            if (Files.isRegularFile(path))
-            {
-                log.info(String.format(logHeader + "Reading file %s", path));
+            log.info(String.format(logHeader + "Reading file %s", path));
 
-                try
-                {
-                    log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
-                    Thread.sleep(delayMsecs);
-                    log.info(logHeader + "Delay done");
-                }
-                catch (InterruptedException ex)
-                {
-                    //gulp ...
-                }
+            try
+            {
+                log.info(logHeader + "Delaying " + delayMsecs + " milliseconds ....");
+                Thread.sleep(delayMsecs);
+                log.info(logHeader + "Delay done");
+            }
+            catch (InterruptedException ex)
+            {
+                //gulp ...
             }
         }
     }
