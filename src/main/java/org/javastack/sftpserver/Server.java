@@ -39,7 +39,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.sshd.common.Factory;
-import org.apache.sshd.common.io.IoServiceEventListener;
 import org.apache.sshd.server.command.Command;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolver;
@@ -90,8 +89,10 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	private SshServer sshd;
 	private volatile boolean running = true;
 
-	public static void main(final String[] args) {
-		new Server().start();
+	public static void main(final String[] args)
+	{
+		Server server = new Server();
+		server.start(true);
 	}
 
 	protected void setupFactories() {
@@ -233,9 +234,23 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 	}
 	*/
 
-	public void start() {
-		LOG.info("Starting");
+	public Server()
+	{
 		db = loadConfig();
+	}
+
+	public Properties getConfig()
+	{
+		if (db != null)
+		{
+			return db.getProperties();
+		}
+
+		return null;
+	}
+
+	public void start(boolean loop) {
+		LOG.info("Starting");
 		System.out.println("sftp.home = " + System.getProperty("sftp.home").replace('\\','/').replace("//","/"));
 		LOG.info("BouncyCastle enabled=" + SecurityUtils.isBouncyCastleRegistered());
 		sshd = SshServer.setUpDefaultServer();
@@ -267,11 +282,19 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		} catch (Exception e) {
 			LOG.error("Exception " + e.toString(), e);
 		}
-		while (running) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
+
+		if (loop)
+		{
+			while (running)
+			{
+				try
+				{
+					Thread.sleep(1000);
+				}
+				catch (InterruptedException e)
+				{
+					Thread.currentThread().interrupt();
+				}
 			}
 		}
 	}
@@ -356,7 +379,6 @@ public class Server implements PasswordAuthenticator, PublickeyAuthenticator {
 		}
 
 		Properties getProperties() { return db; }
-
 
 		// Tellis - path to .pem HostKey file
 		public String getHostKeyPemPath()
