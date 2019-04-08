@@ -10,19 +10,14 @@ import org.apache.sshd.client.subsystem.sftp.SimpleSftpClient;
 import org.apache.sshd.client.subsystem.sftp.impl.SimpleSftpClientImpl;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.junit.After;
-
-import static org.junit.Assert.*;
-
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import static org.junit.Assert.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +39,6 @@ public class TestServer
                             "build" /* Gradle */));
 
     private static final String TEMP_SUBFOLDER_NAME = "temp";
-
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Before
     public void setUp() throws IOException
@@ -116,6 +108,16 @@ public class TestServer
 
         ClientSession session = sftp.getSession();
 
+        assertTrue(session.isOpen());
+        assertTrue(session.isAuthenticated());
+    }
+
+    @Test
+    public void testWrite() throws IOException
+    {
+        SftpClient sftp = login();
+
+        ClientSession session = sftp.getSession();
         assertTrue(session.isOpen());
         assertTrue(session.isAuthenticated());
     }
